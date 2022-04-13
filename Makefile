@@ -5,30 +5,14 @@
 #	Recursive Make Considered Harmful
 #	http://aegis.sourceforge.net/auug97.pdf
 #
-OBJDIR := obj
+OBJDIR := build
 COMMIT := ""
-
-# Run 'make V=1' to turn on verbose commands, or 'make V=0' to turn them off.
-ifeq ($(V),1)
-override V =
-endif
-ifeq ($(V),0)
-override V = @
-endif
-
--include conf/lab.mk
 
 -include conf/env.mk
 
 LABSETUP ?= ./
 
 TOP = .
-
-# Values for LEGACY are Yes or No
-# 1. A value of Yes means use legacy JOS toolchain when compiling JOS kernel
-# 2. A value of No means use llvm-13 toolchain when compiling JOS kernel
-# default value is LEGACY=Yes
-LEGACY=Yes
 
 # Cross-compiler jos toolchain
 #
@@ -58,7 +42,6 @@ endif
 # try to generate a unique GDB port
 GDBPORT	:= $(shell expr `id -u` % 5000 + 25000)
 
-ifeq ($(LEGACY),Yes)
 CC	:= $(CROSS_COMPILE)gcc -pipe
 AS	:= $(CROSS_COMPILE)gcc
 AR	:= $(CROSS_COMPILE)ar
@@ -66,15 +49,6 @@ LD	:= $(CROSS_COMPILE)gcc
 OBJCOPY := $(CROSS_COMPILE)objcopy
 OBJDUMP := $(CROSS_COMPILE)objdump
 NM	:= $(CROSS_COMPILE)nm
-else
-CC	:= clang -pipe
-AS	:= clang
-AR	:= llvm-ar
-LD	:= ld.lld
-OBJCOPY := llvm-objcopy
-OBJDUMP := llvm-objdump
-NM	:= llvm-nm
-endif
 
 # binutils-gold has problems with parsing -Ttext right
 ifneq ($(shell which $(LD).bfd 2>/dev/null),)
@@ -98,10 +72,6 @@ CFLAGS += -Iinclude
 # Add -fno-stack-protector if the option exists.
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 
-ifneq ($(LEGACY),Yes)
-CFLAGS += -Wno-unused-command-line-argument
-endif
-
 GCC_LIB := $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 
 # Lists that the */Makefile makefile fragments will add to
@@ -121,49 +91,21 @@ all:
 	   $(OBJDIR)/lib/%.o $(OBJDIR)/fs/%.o $(OBJDIR)/net/%.o \
 	   $(OBJDIR)/user/%.o
 
-ifeq ($(LEGACY),Yes)
 BOOT_CFLAGS := $(CFLAGS) -DJOS_KERNEL -fno-pie -Os -m32
 BOOT_LDFLAGS := -N -nostdlib -T boot/boot.ld -m32 -static -fno-pie -Wl,-melf_i386
-else
-# For clang-13 -Os is not enough to make bootloader fit into 3 sectors
-# so use Link-Time-Optimizations and -Oz flag (and system assembler).
-BOOT_CFLAGS := $(CFLAGS) -DJOS_KERNEL -fno-pie -Oz -m32 -fno-integrated-as -flto -fno-stack-protector
-BOOT_LDFLAGS := -N -nostdlib -T boot/boot.ld -m32 -static --no-pie -melf_i386
-endif
 
 KERNEL_CFLAGS := $(CFLAGS) -DOpenLSD_KERNEL -gdwarf-2 -mcmodel=large -fno-pie
 KERNEL_CFLAGS += -DKERNEL_LMA=0x100000
 KERNEL_CFLAGS += -DKERNEL_VMA=0xFFFF800000000000
 KERNEL_CFLAGS += -mno-sse
 
-ifneq ($(LEGACY),Yes)
-# Works with the integrated LLVM assembler as well but lets keep some uniformity
-# with the bootloader. Also, clang might generate some sse instructions for
-# register variables which are not available at kernel boot time. Disable
-# SSE extensions.
-KERNEL_CFLAGS += -mno-mmx -mno-sse -mno-avx
-# Note: all warnings should be fixed when clang is used. Else we might
-# get into issues with uninitialized variables.
-endif
-
-ifeq ($(LEGACY),Yes)
 KERNEL_LDFLAGS := -Tkernel/kernel.ld -nostdlib -n -fno-pie
 KERNEL_LDFLAGS += -Wl,--defsym,KERNEL_LMA=0x100000
 KERNEL_LDFLAGS += -Wl,--defsym,KERNEL_VMA=0xFFFF800000000000
 KERNEL_LDFLAGS += -static
-else
-KERNEL_LDFLAGS := -Tkernel/kernel.ld -nostdlib -n --no-pie
-KERNEL_LDFLAGS += --defsym=KERNEL_LMA=0x100000
-KERNEL_LDFLAGS += --defsym=KERNEL_VMA=0xFFFF800000000000
-KERNEL_LDFLAGS += -static
-endif
 
 USER_CFLAGS := $(CFLAGS) -DOpenLSD_USER -gdwarf-2 -fpic
 USER_LDFLAGS := -Tuser/user.ld -nostdlib -n -pie
-
-ifneq ($(LEGACY),Yes)
-USER_CFLAGS += -mno-mmx -mno-sse -mno-avx -w -DUSE_CLANG
-endif
 
 # Update .vars.X if variable X has changed since the last make run.
 #
@@ -247,98 +189,6 @@ realclean: clean
 
 distclean: realclean
 	rm -rf conf/gcc.mk
-
-ifneq ($(V),@)
-GRADEFLAGS += -v
-endif
-
-grade:
-	@echo $(MAKE) clean
-	@$(MAKE) clean || \
-	  (echo "'make clean' failed.  HINT: Do you have another running instance of OpenLSD?" && exit 1)
-	./grade-lab$(LAB) $(GRADEFLAGS)
-
-handin: handin-check
-ifeq (${COMMIT}, "")
-		@git --no-pager log -3 --pretty=oneline;
-		@echo "You did not specify a commit hash.";
-		@echo "Please set COMMIT variable in the command line:";
-		@echo "> make handin COMMIT=<your commit-hash>";
-		@false;
-endif
-	@if git tag -l | grep "${TAG_LAB_SOLN}" >/dev/null; then \
-		if ! git tag -d ${TAG_LAB_SOLN}; then \
-			echo ;\
-			echo "Tag: ${TAG_LAB_SOLN} exists already. Failed removing it."; \
-			false; \
-		fi; \
-	fi;
-	@echo "git tag ${TAG_LAB_SOLN} -m 'Solution for : Lab${LAB}' ${COMMIT} ";
-	@if ! git tag ${TAG_LAB_SOLN} -m 'Solution for : Lab${LAB}' ${COMMIT}; then \
-		echo ; \
-		echo "*** Hand-in: Tagging your solution failed. Please retry."; \
-		false; \
-	fi;
-	@echo "Your commit was tagged successfully: [ ${COMMIT} : ${TAG_LAB_SOLN} ]";
-
-handin-bonus: handin-check
-ifeq (${COMMIT}, "")
-		@git --no-pager log -3 --pretty=oneline;
-		@echo "You did not specify a commit hash for BONUS.";
-		@echo "Please set COMMIT variable in the command line:";
-		@echo "> make handin COMMIT=<your commit-hash>"
-		@false;
-endif
-	@if git tag -l | grep "${TAG_LAB_BONUS}" >/dev/null; then \
-		if ! git tag -d ${TAG_LAB_BONUS}; then \
-			echo ;\
-			echo "Tag: ${TAG_LAB_BONUS} exists already. Failed to remove it."; \
-			false; \
-		fi; \
-	fi;
-	@echo "git tag ${TAG_LAB_BONUS} -m 'Solution for BONUS of : Lab${LAB}' ${COMMIT} ";
-	@if ! git tag ${TAG_LAB_BONUS} -m 'Solution for BONUS of : Lab${LAB}' ${COMMIT}; then \
-		echo ; \
-		echo "*** Hand-in BONUS: Tagging your solution failed. Please retry."; \
-		false; \
-	fi;
-	@echo "Bonus commit tagged successfully: [ ${COMMIT} : ${TAG_LAB_BONUS} ]";
-
-handin-check:
-	@if test "$$(git symbolic-ref HEAD)" != refs/heads/lab$(LAB); then \
-		git branch; \
-		read -p "You are not on the lab$(LAB) branch.  Hand-in the current branch? [y/N] " r; \
-		test "$$r" = y; \
-	fi
-	@if ! git diff-files --quiet || ! git diff-index --quiet --cached HEAD; then \
-		git status; \
-		echo; \
-		echo "You have uncomitted changes.  Please commit or stash them."; \
-		false; \
-	fi
-	@if test -n "`git ls-files -o --exclude-standard`"; then \
-		git status; \
-		read -p "Untracked files will not be handed in.  Continue? [y/N] " r; \
-		test "$$r" = y; \
-	fi
-
-tarball: handin-check
-	git archive --format=tar HEAD > ${PATCH_PREFIX}.lab$(LAB)-handin.tar
-	tar -r --file=${PATCH_PREFIX}.lab$(LAB)-handin.tar ./.git
-	gzip ${PATCH_PREFIX}.lab$(LAB)-handin.tar
-
-apply-check: ${PATCH_PREFIX}.lab${LAB}.patch
-	@if ! git apply --check ${PATCH_PREFIX}.lab${LAB}.patch; then \
-		echo "** Patch does not apply: ${PATCH_PREFIX}.lab${LAB}.patch"; \
-		false; \
-	fi; \
-
-apply: ${PATCH_PREFIX}.lab${LAB}.patch apply-check
-	@if ! git am ${PATCH_PREFIX}.lab${LAB}.patch; then \
-		echo "Failed to apply your soln patch: ${PATCH_PREFIX}.lab${LAB}.patch"; \
-	fi; \
-
-# For test runs
 
 prep-%:
 	$(V)$(MAKE) "INIT_CFLAGS=${INIT_CFLAGS} -DTEST=`case $* in *_*) echo $*;; *) echo user_$*;; esac`" $(IMAGES)
