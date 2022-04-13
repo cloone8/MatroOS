@@ -1,0 +1,9 @@
+.gdbrc
+x86_64*
+obj
+.settings
+.vscode
+__pycache__
+*.out
+*tar.gz
+jos.out.*
