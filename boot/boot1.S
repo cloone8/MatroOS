@@ -6,6 +6,7 @@
 .global _start
 _start:
 	cli
+	cld
 
 	/* The BIOS may have set up the segment registers and the stack in any kind
 	 * of state. We will use the memory area below 0x0000:0x7C00 as stack
@@ -17,6 +18,15 @@ _start:
 	movw %ax, %ds
 	movw %ax, %es
 	movw %ax, %ss
+
+	/* Set the video mode to 80x25 */
+	movb $0x00, %ah
+	movb $0x3, %al
+	int $0x10
+
+
+	movw $starting_bootloader, %si
+	call puts
 
 	ljmp $0x0, $1f
 
@@ -43,6 +53,9 @@ _start:
 	jc 2f
 
 	/* The second stage has been loaded. Jump to its entry point. */
+	movw $entering_stage2, %si
+	call puts
+
 	jmp boot2
 
 2:
@@ -129,4 +142,5 @@ disk_packet:
 	.quad 0
 
 error: .ascii "Disk error!\0"
-
+starting_bootloader: .ascii "Starting MatroOS bootloader\0"
+entering_stage2: .ascii "Jumping to stage 2\0"
