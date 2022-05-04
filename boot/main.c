@@ -124,4 +124,3 @@ void readsect(void *dst, uint32_t offset)
 	read_sector32((void *)0x1000, offset);
 	memcpy(dst, (void *)0x1000, SECTSIZE);
 }
-

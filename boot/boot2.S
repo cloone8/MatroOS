@@ -6,6 +6,12 @@
 
 .global boot2
 boot2:
+	movw $bootloader_stage2, %si
+	call puts
+
+	movw $enabling_a20, %si
+	call puts
+
 	/* Enable the A20 line. */
 	call set_a20
 	jnc 1f
@@ -19,6 +25,9 @@ boot2:
 	movw %di, mmap_addr
 	call get_mmap_e820
 	movw %bp, mmap_count
+
+	movw $entering_bootmain, %si
+	call puts
 
 	/* Enable protected mode. */
 	movl %cr0, %eax
@@ -34,6 +43,7 @@ boot2:
 	movw %ax, %fs
 	movw %ax, %gs
 	movw %ax, %ss
+
 	ljmp $0x8, $boot32
 
 .code32
@@ -94,4 +104,6 @@ gdtr:
 
 .global test
 error_a20: .ascii "error: unable to enable the A20 line.\0"
-
+bootloader_stage2: .ascii "Entering bootloader stage 2\0"
+enabling_a20: .ascii "Trying to enable A20 line\0"
+entering_bootmain: .ascii "A20 enabled. Trying to jump to bootmain\0"
