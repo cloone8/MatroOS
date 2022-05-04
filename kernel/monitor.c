@@ -245,7 +245,7 @@ void monitor(struct int_frame *frame)
 	if(spin_trylock(&monitor_lock)) {
 		DEBUG("Monitor started by %u\n", this_cpu->cpu_id);
 
-		cprintf("Welcome to the OpenLSD kernel monitor!\n");
+		cprintf("Welcome to the MatroOS kernel monitor!\n");
 		cprintf("Type 'help' for a list of commands.\n");
 
 		while (1) {
@@ -263,7 +263,7 @@ void monitor(struct int_frame *frame)
 	#else
 		DEBUG("Monitor started by %u\n", this_cpu->cpu_id);
 
-		cprintf("Welcome to the OpenLSD kernel monitor!\n");
+		cprintf("Welcome to the MatroOS kernel monitor!\n");
 		cprintf("Type 'help' for a list of commands.\n");
 
 		while (1) {
