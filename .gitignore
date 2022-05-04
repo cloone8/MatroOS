@@ -7,3 +7,5 @@ __pycache__
 *.out
 *tar.gz
 jos.out.*
+build
+.DS_Store
