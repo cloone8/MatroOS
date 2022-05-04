@@ -4,25 +4,48 @@
 #include <kernel/mem.h>
 #include <assert.h>
 
-unsigned int bootio_index = 0;
+static int cur_x = 0;
+static int cur_y = 0;
 
 char bootio_get_color_byte(const char fg, const char bg) {
     assert(fg >= 0 && fg < 16);
     assert(bg >= 0 && bg < 16);
 
-    char colorbyte = 0;
-
-    colorbyte |= (0xf & fg); // Lowest 4 bits is the foreground color
-    colorbyte |= (0x70 & (bg << 4));
-
-    return colorbyte;
+    return bootio_compute_color(fg, bg);
 }
 
 void bootio_print_char(const char c, const char colorbyte) {
-    *(VMEM + bootio_index) = c;
-    *((VMEM + bootio_index) + 1) = colorbyte;
+    const size_t cur_vmem_index = bootio_index_from_coords(cur_x, cur_y);
 
-    bootio_index += 2;
+    switch(c) {
+        case '\n':
+            cur_y += 1;
+            cur_x = 0;
+            break;
+        case '\r':
+            cur_x = 0;
+            break;
+        default:
+            *(VMEM + cur_vmem_index) = c;
+            *((VMEM + cur_vmem_index) + 1) = colorbyte;
+            cur_x += 1;
+            break;
+    }
+
+    // Next character would be wrapping off the screen
+    if(cur_x == 80) {
+        cur_x = 0;
+        cur_y += 1;
+    }
+
+    if(cur_y == 25) {
+        // TODO: Implement scrolling
+        bootio_clear_screen();
+    }
+}
+
+void bootio_putc(const char c) {
+    bootio_print_char(c, bootio_compute_color(BOOTIO_DEFAULT_FG, BOOTIO_DEFAULT_BG));
 }
 
 void bootio_print_string(const char* s, const int fg, const int bg) {
@@ -47,11 +70,12 @@ void bootio_print_string(const char* s, const int fg, const int bg) {
 void bootio_clear_screen(void) {
     const char colorbyte = bootio_get_color_byte(BOOTIO_BLACK, BOOTIO_BLACK);
 
-    for(int i = 0; i < 25; i++) {
-		for(int j = 0; j < 80; j++) {
-			bootio_print_char(' ', colorbyte);
-		}
+    for(int i = 0; i < 25 * 80; i++) {
+        const size_t cur_mem_index = i * 2;
+        *(VMEM + cur_mem_index) = ' ';
+        *((VMEM + cur_mem_index) + 1) = colorbyte;
 	}
 
-    bootio_index = 0;
+    cur_x = 0;
+    cur_y = 0;
 }

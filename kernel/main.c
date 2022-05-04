@@ -42,12 +42,7 @@ void kmain(struct boot_info *boot_info)
 
 	// Say hi
 	bootio_clear_screen();
-	bootio_print_string("Booting MatroOS", BOOTIO_GRAY, BOOTIO_BLACK);
-
-	asm volatile(
-		"cli\n"
-		"hlt\n"
-	);
+	bootio_print_string("Booting MatroOS\n", BOOTIO_GRAY, BOOTIO_BLACK);
 
 	/* Initialize the console.
 	 * Can't call cprintf until after we do this! */

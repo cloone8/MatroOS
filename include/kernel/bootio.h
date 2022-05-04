@@ -1,5 +1,7 @@
 #pragma once
 
+#include <assert.h>
+
 #define VMEM ((char*)0xb8000)
 
 #define BOOTIO_BLACK (0)
@@ -19,6 +21,11 @@
 #define BOOTIO_YELLOW (14)
 #define BOOTIO_WHITE (15)
 
+#define BOOTIO_DEFAULT_FG (BOOTIO_GRAY)
+#define BOOTIO_DEFAULT_BG (BOOTIO_BLACK)
+
+
+#define bootio_compute_color(fg, bg) ((char) ((char)0xf & fg) | ((char)0x70 & (bg << 4)))
 
 /**
  * Protected mode video color bytes are arranged as follows:
@@ -50,3 +57,15 @@ void bootio_print_string(const char* s, const int fg, const int bg);
  * Clears the current screen to all black
  */
 void bootio_clear_screen(void);
+
+/**
+ * Outputs a single character to the display in the default colors
+ */
+void bootio_putc(const char c);
+
+static inline size_t bootio_index_from_coords(int x, int y) {
+    assert(x >= 0 && x <= 80);
+    assert(y >= 0 && y <= 25);
+
+    return ((80 * y) + x) * 2;
+}
