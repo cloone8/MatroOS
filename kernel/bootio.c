@@ -16,6 +16,13 @@ char bootio_get_color_byte(const char fg, const char bg) {
 
 void bootio_print_char(const char c, const char colorbyte) {
     const size_t cur_vmem_index = bootio_index_from_coords(cur_x, cur_y);
+    char* vmem_location;
+
+    if(long_mode_enabled) {
+        vmem_location = (char*) KADDR((physaddr_t) VMEM);
+    } else {
+        vmem_location = VMEM;
+    }
 
     switch(c) {
         case '\n':
@@ -26,8 +33,8 @@ void bootio_print_char(const char c, const char colorbyte) {
             cur_x = 0;
             break;
         default:
-            *(VMEM + cur_vmem_index) = c;
-            *((VMEM + cur_vmem_index) + 1) = colorbyte;
+            *(vmem_location + cur_vmem_index) = c;
+            *((vmem_location + cur_vmem_index) + 1) = colorbyte;
             cur_x += 1;
             break;
     }
