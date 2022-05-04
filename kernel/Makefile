@@ -167,6 +167,11 @@ KERNEL_SRCFILES += \
 KERNEL_BINFILES += \
 	user/mempress
 
+# Custom code
+
+KERNEL_SRCFILES += \
+	kernel/bootio.c
+
 # Only build files if they exist.
 KERNEL_SRCFILES := $(wildcard $(KERNEL_SRCFILES))
 

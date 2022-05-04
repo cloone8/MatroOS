@@ -11,6 +11,7 @@
 #include <kernel/sched.h>
 #include <kernel/tests.h>
 #include <kernel/kerneltasks.h>
+#include <kernel/bootio.h>
 
 #include <boot.h>
 #include <stdio.h>
@@ -38,11 +39,20 @@ void kmain(struct boot_info *boot_info)
 	 */
 	memset(edata, 0, end - edata);
 
+
+	// Say hi
+	bootio_clear_screen();
+	bootio_print_string("Booting MatroOS", BOOTIO_GRAY, BOOTIO_BLACK);
+
+	asm volatile(
+		"cli\n"
+		"hlt\n"
+	);
+
 	/* Initialize the console.
 	 * Can't call cprintf until after we do this! */
 	cons_init();
 	cprintf("\n");
-	DEBUG("Booting MatroOS\n");
 
 	#ifdef USE_PAGE_SWAP
 		list_init(&clock_list);

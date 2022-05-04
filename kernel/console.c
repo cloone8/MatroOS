@@ -415,6 +415,7 @@ int cons_getc(void)
 /* Output a character to the console. */
 static void cons_putc(int c)
 {
+    // TODO: Make this actually do something
     serial_putc(c);
     lpt_putc(c);
     cga_putc(c);
