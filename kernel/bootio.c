@@ -14,8 +14,17 @@ char bootio_get_color_byte(const char fg, const char bg) {
     return bootio_compute_color(fg, bg);
 }
 
+static inline char* get_vmem_location(void) {
+    if(long_mode_enabled) {
+        return (char*) KADDR((physaddr_t) VMEM);
+    } else {
+        return VMEM;
+    }
+}
+
 void bootio_print_char(const char c, const char colorbyte) {
     const size_t cur_vmem_index = bootio_index_from_coords(cur_x, cur_y);
+    char* vmem_location = get_vmem_location();
 
     switch(c) {
         case '\n':
@@ -26,8 +35,8 @@ void bootio_print_char(const char c, const char colorbyte) {
             cur_x = 0;
             break;
         default:
-            *(VMEM + cur_vmem_index) = c;
-            *((VMEM + cur_vmem_index) + 1) = colorbyte;
+            *(vmem_location + cur_vmem_index) = c;
+            *((vmem_location + cur_vmem_index) + 1) = colorbyte;
             cur_x += 1;
             break;
     }
@@ -69,11 +78,12 @@ void bootio_print_string(const char* s, const int fg, const int bg) {
 
 void bootio_clear_screen(void) {
     const char colorbyte = bootio_get_color_byte(BOOTIO_BLACK, BOOTIO_BLACK);
+    char* vmem_location = get_vmem_location();
 
     for(int i = 0; i < 25 * 80; i++) {
         const size_t cur_mem_index = i * 2;
-        *(VMEM + cur_mem_index) = ' ';
-        *((VMEM + cur_mem_index) + 1) = colorbyte;
+        *(vmem_location + cur_mem_index) = ' ';
+        *((vmem_location + cur_mem_index) + 1) = colorbyte;
 	}
 
     cur_x = 0;

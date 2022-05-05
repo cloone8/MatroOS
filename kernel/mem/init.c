@@ -15,6 +15,7 @@ extern struct list buddy_free_list[];
 
 /* The kernel's initial PML4. */
 struct page_table *kernel_pml4;
+int long_mode_enabled = 0;
 
 /* This function sets up the initial PML4 for the kernel. */
 int pml4_setup(struct boot_info *boot_info)
@@ -134,6 +135,7 @@ void mem_init(struct boot_info *boot_info) {
 	/* Load the kernel PML4. */
 	DEBUG("Writing PML4 (va: %p, pa: %p) to CR3\n", kernel_pml4, PADDR(kernel_pml4));
 	load_pml4((struct page_table*) PADDR(kernel_pml4));
+	long_mode_enabled = 1;
 	DEBUG("Done loading kernel PML4\n");
 
 	/* Check the paging functions. */
