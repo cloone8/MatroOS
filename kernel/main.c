@@ -11,6 +11,7 @@
 #include <kernel/sched.h>
 #include <kernel/tests.h>
 #include <kernel/kerneltasks.h>
+#include <kernel/bootio.h>
 
 #include <boot.h>
 #include <stdio.h>
@@ -38,11 +39,14 @@ void kmain(struct boot_info *boot_info)
 	 */
 	memset(edata, 0, end - edata);
 
+
+	// Say hi
+	bootio_clear_screen();
+	bootio_print_string("Booting MatroOS\n", BOOTIO_GRAY, BOOTIO_BLACK);
+
 	/* Initialize the console.
 	 * Can't call cprintf until after we do this! */
 	cons_init();
-	cprintf("\n");
-	DEBUG("Booting MatroOS\n");
 
 	#ifdef USE_PAGE_SWAP
 		list_init(&clock_list);
@@ -56,6 +60,7 @@ void kmain(struct boot_info *boot_info)
 	syscall_init();
 
 	/* Lab 1 memory management initialization functions */
+	cprintf("NOTE: The display output driver currently only supports 32 bit protected mode.\nOnce the kernel PML4 is loaded the switch to 64 bit long mode is made,\nwhich disables text output.\n\n");
 	mem_init(boot_info);
 
 	/* Set up the slab allocator. */

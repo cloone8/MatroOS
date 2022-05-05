@@ -26,4 +26,3 @@ struct mmap_entry {
 	uint32_t flags;
 };
 #endif /* !defined(__ASSEMBLER__) */
-
