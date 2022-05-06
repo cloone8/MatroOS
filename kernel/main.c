@@ -11,7 +11,7 @@
 #include <kernel/sched.h>
 #include <kernel/tests.h>
 #include <kernel/kerneltasks.h>
-#include <kernel/bootio.h>
+#include <kernel/output.h>
 
 #include <boot.h>
 #include <stdio.h>
@@ -41,8 +41,8 @@ void kmain(struct boot_info *boot_info)
 
 
 	// Say hi
-	bootio_clear_screen();
-	bootio_print_string("Booting MatroOS\n", BOOTIO_GRAY, BOOTIO_BLACK);
+	vga_textmode_clear_screen();
+	vga_textmode_print_string("Booting MatroOS\n", VGA_TEXTMODE_GRAY, VGA_TEXTMODE_BLACK);
 
 	/* Initialize the console.
 	 * Can't call cprintf until after we do this! */

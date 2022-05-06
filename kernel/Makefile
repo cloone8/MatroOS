@@ -167,10 +167,13 @@ KERNEL_SRCFILES += \
 KERNEL_BINFILES += \
 	user/mempress
 
-# Custom code
-
+# Output drivers
 KERNEL_SRCFILES += \
-	kernel/bootio.c
+	kernel/output/vga_textmode/vga_textmode.c
+
+# Input drivers
+KERNEL_SRCFILES += \
+	kernel/input/ps2/ps2.c
 
 # Only build files if they exist.
 KERNEL_SRCFILES := $(wildcard $(KERNEL_SRCFILES))

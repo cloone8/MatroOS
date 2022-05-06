@@ -98,6 +98,7 @@ KERNEL_CFLAGS := $(CFLAGS) -DOpenLSD_KERNEL -gdwarf-2 -mcmodel=large -fno-pie
 KERNEL_CFLAGS += -DKERNEL_LMA=0x100000
 KERNEL_CFLAGS += -DKERNEL_VMA=0xFFFF800000000000
 KERNEL_CFLAGS += -mno-sse
+# KERNEL_CFLAGS += -O3
 
 KERNEL_LDFLAGS := -Tkernel/kernel.ld -nostdlib -n -fno-pie
 KERNEL_LDFLAGS += -Wl,--defsym,KERNEL_LMA=0x100000

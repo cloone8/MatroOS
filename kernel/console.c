@@ -5,7 +5,7 @@
 
 #include <kernel/console.h>
 #include <kernel/pic.h>
-#include <kernel/bootio.h>
+#include <kernel/output.h>
 
 /***** General device-independent console code *****/
 /* Here we manage the console input buffer,
@@ -45,13 +45,13 @@ int cons_getc(void)
 /* Output a character to the console. */
 static void cons_putc(int c)
 {
-    bootio_putc((const char) c);
+    vga_textmode_putc((const char) c);
 }
 
 /* Initialize the console devices. */
 void cons_init(void)
 {
-    bootio_clear_screen();
+    vga_textmode_clear_screen();
 }
 
 
