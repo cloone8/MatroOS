@@ -223,6 +223,7 @@ $(OBJDIR)/kernel/kernel.img: $(OBJDIR)/kernel/kernel $(OBJDIR)/boot/boot
 # Build a swap image.
 $(OBJDIR)/kernel/swap.img:
 	@echo + mk $@
+	$(V)mkdir -p $(OBJDIR)/kernel/
 	$(V)echo -n "SWAP" > $(OBJDIR)/kernel/swap.img~
 	$(V)truncate -s 128M $(OBJDIR)/kernel/swap.img~
 	$(V)mv $(OBJDIR)/kernel/swap.img~ $(OBJDIR)/kernel/swap.img
