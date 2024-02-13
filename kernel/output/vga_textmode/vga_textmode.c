@@ -1,17 +1,17 @@
 #include <types.h>
 
-#include <kernel/bootio.h>
+#include <kernel/output.h>
 #include <kernel/mem.h>
 #include <assert.h>
 
 static int cur_x = 0;
 static int cur_y = 0;
 
-char bootio_get_color_byte(const char fg, const char bg) {
+char vga_textmode_get_color_byte(const char fg, const char bg) {
     assert(fg >= 0 && fg < 16);
     assert(bg >= 0 && bg < 16);
 
-    return bootio_compute_color(fg, bg);
+    return vga_textmode_compute_color(fg, bg);
 }
 
 static inline char* get_vmem_location(void) {
@@ -22,8 +22,8 @@ static inline char* get_vmem_location(void) {
     }
 }
 
-void bootio_print_char(const char c, const char colorbyte) {
-    const size_t cur_vmem_index = bootio_index_from_coords(cur_x, cur_y);
+void vga_textmode_print_char(const char c, const char colorbyte) {
+    const size_t cur_vmem_index = vga_textmode_index_from_coords(cur_x, cur_y);
     char* vmem_location = get_vmem_location();
 
     switch(c) {
@@ -49,19 +49,19 @@ void bootio_print_char(const char c, const char colorbyte) {
 
     if(cur_y == 25) {
         // TODO: Implement scrolling
-        bootio_clear_screen();
+        vga_textmode_clear_screen();
     }
 }
 
-void bootio_putc(const char c) {
-    bootio_print_char(c, bootio_compute_color(BOOTIO_DEFAULT_FG, BOOTIO_DEFAULT_BG));
+void vga_textmode_putc(const char c) {
+    vga_textmode_print_char(c, vga_textmode_compute_color(VGA_TEXTMODE_DEFAULT_FG, VGA_TEXTMODE_DEFAULT_BG));
 }
 
-void bootio_print_string(const char* s, const int fg, const int bg) {
+void vga_textmode_print_string(const char* s, const int fg, const int bg) {
     assert(fg >= 0 && fg < 16);
     assert(bg >= 0 && bg < 16);
 
-    const char colorbyte = bootio_get_color_byte((const char) fg, (const char) bg);
+    const char colorbyte = vga_textmode_get_color_byte((const char) fg, (const char) bg);
 
     char* s_cur = (char*) s;
 
@@ -72,12 +72,12 @@ void bootio_print_string(const char* s, const int fg, const int bg) {
             return;
         }
 
-        bootio_print_char(c, colorbyte);
+        vga_textmode_print_char(c, colorbyte);
     }
 }
 
-void bootio_clear_screen(void) {
-    const char colorbyte = bootio_get_color_byte(BOOTIO_BLACK, BOOTIO_BLACK);
+void vga_textmode_clear_screen(void) {
+    const char colorbyte = vga_textmode_get_color_byte(VGA_TEXTMODE_BLACK, VGA_TEXTMODE_BLACK);
     char* vmem_location = get_vmem_location();
 
     for(int i = 0; i < 25 * 80; i++) {

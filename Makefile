@@ -98,6 +98,7 @@ KERNEL_CFLAGS := $(CFLAGS) -DOpenLSD_KERNEL -gdwarf-2 -mcmodel=large -fno-pie
 KERNEL_CFLAGS += -DKERNEL_LMA=0x100000
 KERNEL_CFLAGS += -DKERNEL_VMA=0xFFFF800000000000
 KERNEL_CFLAGS += -mno-sse
+# KERNEL_CFLAGS += -O3
 
 KERNEL_LDFLAGS := -Tkernel/kernel.ld -nostdlib -n -fno-pie
 KERNEL_LDFLAGS += -Wl,--defsym,KERNEL_LMA=0x100000
@@ -129,9 +130,9 @@ CPUS ?= 1
 QEMUOPTS += -machine q35
 QEMUOPTS += -device ich9-ahci,id=ahci
 QEMUOPTS += -drive id=disk0,format=raw,file=$(OBJDIR)/kernel/kernel.img,if=none
-QEMUOPTS += -device ide-drive,drive=disk0,bus=ahci.0
+QEMUOPTS += -device ide-hd,drive=disk0,bus=ahci.0
 QEMUOPTS += -drive id=disk1,format=raw,file=$(OBJDIR)/kernel/swap.img,if=none
-QEMUOPTS += -device ide-drive,drive=disk1,bus=ahci.1
+QEMUOPTS += -device ide-hd,drive=disk1,bus=ahci.1
 QEMUOPTS += -serial mon:stdio -gdb tcp::$(GDBPORT)
 QEMUOPTS += $(shell if $(QEMU) -nographic -help | grep -q '^-D '; then echo '-D qemu.log'; fi)
 QEMUOPTS += -no-reboot -D /dev/stdout

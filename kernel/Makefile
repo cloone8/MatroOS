@@ -167,10 +167,13 @@ KERNEL_SRCFILES += \
 KERNEL_BINFILES += \
 	user/mempress
 
-# Custom code
-
+# Output drivers
 KERNEL_SRCFILES += \
-	kernel/bootio.c
+	kernel/output/vga_textmode/vga_textmode.c
+
+# Input drivers
+KERNEL_SRCFILES += \
+	kernel/input/ps2/ps2.c
 
 # Only build files if they exist.
 KERNEL_SRCFILES := $(wildcard $(KERNEL_SRCFILES))
@@ -223,6 +226,7 @@ $(OBJDIR)/kernel/kernel.img: $(OBJDIR)/kernel/kernel $(OBJDIR)/boot/boot
 # Build a swap image.
 $(OBJDIR)/kernel/swap.img:
 	@echo + mk $@
+	$(V)mkdir -p $(OBJDIR)/kernel/
 	$(V)echo -n "SWAP" > $(OBJDIR)/kernel/swap.img~
 	$(V)truncate -s 128M $(OBJDIR)/kernel/swap.img~
 	$(V)mv $(OBJDIR)/kernel/swap.img~ $(OBJDIR)/kernel/swap.img
